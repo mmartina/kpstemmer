@@ -1,6 +1,8 @@
 package kpstemmer
 
-type snowballProgram struct {
+import "bytes"
+
+type snowball struct {
 	current        string
 	cursor         int
 	limit          int
@@ -9,9 +11,9 @@ type snowballProgram struct {
 	ket            int
 }
 
-type Bitmask []byte
+type bitmask []byte
 
-func (s *snowballProgram) eq_s(str string) bool {
+func (s *snowball) eq_s(str string) bool {
 	s_size := len(str)
 	if s.limit-s.cursor < s_size {
 		return false
@@ -26,7 +28,7 @@ func (s *snowballProgram) eq_s(str string) bool {
 	return true
 }
 
-func (s *snowballProgram) eq_s_b(str string) bool {
+func (s *snowball) eq_s_b(str string) bool {
 	s_size := len(str)
 	if s.cursor-s.limit_backward < s_size {
 		return false
@@ -41,7 +43,23 @@ func (s *snowballProgram) eq_s_b(str string) bool {
 	return true
 }
 
-func (s *snowballProgram) find_among_b(v []*Among) int {
+type among struct {
+	s_size      int
+	s           string
+	substring_i int
+	result      int
+}
+
+func newAmong(s string, substring_i int, result int) (rcvr *among) {
+	rcvr = &among{}
+	rcvr.s_size = len(s)
+	rcvr.s = s
+	rcvr.substring_i = substring_i
+	rcvr.result = result
+	return
+}
+
+func (s *snowball) find_among_b(v []*among) int {
 	i := 0
 	j := len(v)
 	c := s.cursor
@@ -99,13 +117,13 @@ func (s *snowballProgram) find_among_b(v []*Among) int {
 	return -1
 }
 
-func (s *snowballProgram) GetCurrent() string {
+func (s *snowball) GetCurrent() string {
 	result := string(s.current)
 	s.current = ""
 	return result
 }
 
-func (s *snowballProgram) in_grouping(bitmask Bitmask, min rune, max rune) bool {
+func (s *snowball) in_grouping(bitmask bitmask, min rune, max rune) bool {
 	if s.cursor >= s.limit {
 		return false
 	}
@@ -121,7 +139,7 @@ func (s *snowballProgram) in_grouping(bitmask Bitmask, min rune, max rune) bool 
 	return true
 }
 
-func (s *snowballProgram) in_grouping_b(bitmask Bitmask, min rune, max rune) bool {
+func (s *snowball) in_grouping_b(bitmask bitmask, min rune, max rune) bool {
 	if s.cursor <= s.limit_backward {
 		return false
 	}
@@ -137,7 +155,7 @@ func (s *snowballProgram) in_grouping_b(bitmask Bitmask, min rune, max rune) boo
 	return true
 }
 
-func (s *snowballProgram) insert(c_bra int, c_ket int, str string) {
+func (s *snowball) insert(c_bra int, c_ket int, str string) {
 	adjustment := s.replace_s(c_bra, c_ket, str)
 	if c_bra <= s.bra {
 		s.bra += adjustment
@@ -147,7 +165,7 @@ func (s *snowballProgram) insert(c_bra int, c_ket int, str string) {
 	}
 }
 
-func (s *snowballProgram) out_grouping(bitmask Bitmask, min rune, max rune) bool {
+func (s *snowball) out_grouping(bitmask bitmask, min rune, max rune) bool {
 	if s.cursor >= s.limit {
 		return false
 	}
@@ -164,7 +182,7 @@ func (s *snowballProgram) out_grouping(bitmask Bitmask, min rune, max rune) bool
 	return false
 }
 
-func (s *snowballProgram) out_grouping_b(bitmask Bitmask, min rune, max rune) bool {
+func (s *snowball) out_grouping_b(bitmask bitmask, min rune, max rune) bool {
 	if s.cursor <= s.limit_backward {
 		return false
 	}
@@ -181,7 +199,7 @@ func (s *snowballProgram) out_grouping_b(bitmask Bitmask, min rune, max rune) bo
 	return false
 }
 
-func (s *snowballProgram) replace_s(c_bra int, c_ket int, str string) int {
+func (s *snowball) replace_s(c_bra int, c_ket int, str string) int {
 	adjustment := len(str) - (c_ket - c_bra)
 	s.current = replaceString(s.current, c_bra, c_ket, str)
 	s.limit += adjustment
@@ -193,7 +211,7 @@ func (s *snowballProgram) replace_s(c_bra int, c_ket int, str string) int {
 	return adjustment
 }
 
-func (s *snowballProgram) SetCurrent(value string) {
+func (s *snowball) SetCurrent(value string) {
 	s.current = replaceString(s.current, 0, len(s.current), value)
 	s.cursor = 0
 	s.limit = len(s.current)
@@ -202,22 +220,31 @@ func (s *snowballProgram) SetCurrent(value string) {
 	s.ket = s.limit
 }
 
-func (s *snowballProgram) slice_check() {
+func (s *snowball) slice_check() {
 	if s.bra < 0 || s.bra > s.ket || s.ket > s.limit || s.limit > len(s.current) {
 		// should not occur
 	}
 }
 
-func (s *snowballProgram) slice_del() {
+func (s *snowball) slice_del() {
 	s.slice_from("")
 }
 
-func (s *snowballProgram) slice_from(str string) {
+func (s *snowball) slice_from(str string) {
 	s.slice_check()
 	s.replace_s(s.bra, s.ket, str)
 }
 
-func (s *snowballProgram) slice_to(buf string) string {
+func (s *snowball) slice_to(buf string) string {
 	s.slice_check()
 	return replaceString(buf, 0, len(buf), s.current[s.bra:s.ket])
+}
+
+func replaceString(src string, start int, end int, sub string) string {
+	var buf bytes.Buffer
+	buf.Grow(len(src) + len(sub))
+	buf.WriteString(src[:start])
+	buf.WriteString(sub)
+	buf.WriteString(src[end:])
+	return buf.String()
 }

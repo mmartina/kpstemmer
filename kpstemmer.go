@@ -1,10 +1,10 @@
 package kpstemmer
 
 var (
-	g_v    Bitmask = []byte{17, 65, 16, 1}  // 'aeiouy'
-	g_v_WX Bitmask = []byte{17, 65, 208, 1} // v + 'wx'
-	g_AOU  Bitmask = []byte{1, 64, 16}      // 'aou'
-	g_AIOU Bitmask = []byte{1, 65, 16}      // 'aiou'
+	g_v    bitmask = []byte{17, 65, 16, 1}  // 'aeiouy'
+	g_v_WX bitmask = []byte{17, 65, 208, 1} // v + 'wx'
+	g_AOU  bitmask = []byte{1, 64, 16}      // 'aou'
+	g_AIOU bitmask = []byte{1, 65, 16}      // 'aiou'
 )
 
 const (
@@ -13,15 +13,15 @@ const (
 	rune_y rune = 'y'
 )
 
-type KpStemmer struct {
-	snowballProgram
+type kpStemmer struct {
+	snowball
 	b_GE_removed bool
 	i_p1         int
 	i_p2         int
 }
 
 // define C  as test (not 'ij' non-v)
-func (s *KpStemmer) r_C() bool {
+func (s *kpStemmer) r_C() bool {
 	r := s.limit - s.cursor
 	if !s.eq_s_b("ij") && s.out_grouping_b(g_v, rune_a, rune_y) {
 		s.cursor = s.limit - r
@@ -31,7 +31,7 @@ func (s *KpStemmer) r_C() bool {
 }
 
 // define Lose_infix as
-func (s *KpStemmer) r_Lose_infix() bool {
+func (s *kpStemmer) r_Lose_infix() bool {
 	// next
 	{
 		if s.cursor >= s.limit {
@@ -79,7 +79,7 @@ func (s *KpStemmer) r_Lose_infix() bool {
 }
 
 // define Lose_prefix as
-func (s *KpStemmer) r_Lose_prefix() bool {
+func (s *kpStemmer) r_Lose_prefix() bool {
 	// ['ge'] test hop 3 (goto v goto non-v)
 	s.bra = s.cursor
 	if s.eq_s("ge") {
@@ -114,27 +114,27 @@ func (s *KpStemmer) r_Lose_prefix() bool {
 }
 
 // define R1 as (setmark x $x >= p1)
-func (s *KpStemmer) r_R1() bool {
+func (s *kpStemmer) r_R1() bool {
 	return s.cursor >= s.i_p1
 }
 
 // define R2 as (setmark x $x >= p2)
-func (s *KpStemmer) r_R2() bool {
+func (s *kpStemmer) r_R2() bool {
 	return s.cursor >= s.i_p2
 }
 
-var a_step_1 = []*Among{
-	NewAmong("nde", -1, 7),
-	NewAmong("en", -1, 6),
-	NewAmong("s", -1, 2),
-	NewAmong("'s", 2, 1),
-	NewAmong("es", 2, 4),
-	NewAmong("ies", 4, 3),
-	NewAmong("aus", 2, 5),
+var a_step_1 = []*among{
+	newAmong("nde", -1, 7),
+	newAmong("en", -1, 6),
+	newAmong("s", -1, 2),
+	newAmong("'s", 2, 1),
+	newAmong("es", 2, 4),
+	newAmong("ies", 4, 3),
+	newAmong("aus", 2, 5),
 }
 
 // define Step_1 as
-func (s *KpStemmer) r_Step_1() bool {
+func (s *kpStemmer) r_Step_1() bool {
 	// [among ( (])
 	s.ket = s.cursor
 	among_var := s.find_among_b(a_step_1)
@@ -237,12 +237,12 @@ func (s *KpStemmer) r_Step_1() bool {
 	return false
 }
 
-var a_step_1c = []*Among{
-	NewAmong("d", -1, 1),
-	NewAmong("t", -1, 2),
+var a_step_1c = []*among{
+	newAmong("d", -1, 1),
+	newAmong("t", -1, 2),
 }
 
-func (s *KpStemmer) r_Step_1c() {
+func (s *kpStemmer) r_Step_1c() {
 	// [among ( (] R1 C)
 	s.ket = s.cursor
 	among_var := s.find_among_b(a_step_1c)
@@ -272,22 +272,22 @@ func (s *KpStemmer) r_Step_1c() {
 	// )
 }
 
-var a_step_2 = []*Among{
-	NewAmong("de", -1, 5),
-	NewAmong("ge", -1, 2),
-	NewAmong("ische", -1, 4),
-	NewAmong("je", -1, 1),
-	NewAmong("lijke", -1, 3),
-	NewAmong("le", -1, 9),
-	NewAmong("ene", -1, 10),
-	NewAmong("re", -1, 8),
-	NewAmong("se", -1, 7),
-	NewAmong("te", -1, 6),
-	NewAmong("ieve", -1, 11),
+var a_step_2 = []*among{
+	newAmong("de", -1, 5),
+	newAmong("ge", -1, 2),
+	newAmong("ische", -1, 4),
+	newAmong("je", -1, 1),
+	newAmong("lijke", -1, 3),
+	newAmong("le", -1, 9),
+	newAmong("ene", -1, 10),
+	newAmong("re", -1, 8),
+	newAmong("se", -1, 7),
+	newAmong("te", -1, 6),
+	newAmong("ieve", -1, 11),
 }
 
 // define Step_2 as
-func (s *KpStemmer) r_Step_2() bool {
+func (s *kpStemmer) r_Step_2() bool {
 	// [among ( (])
 	s.ket = s.cursor
 	among_var := s.find_among_b(a_step_2)
@@ -429,25 +429,25 @@ func (s *KpStemmer) r_Step_2() bool {
 	return false
 }
 
-var a_step_3 = []*Among{
-	NewAmong("heid", -1, 3),
-	NewAmong("fie", -1, 7),
-	NewAmong("gie", -1, 8),
-	NewAmong("atie", -1, 1),
-	NewAmong("isme", -1, 5),
-	NewAmong("ing", -1, 5),
-	NewAmong("arij", -1, 6),
-	NewAmong("erij", -1, 5),
-	NewAmong("sel", -1, 3),
-	NewAmong("rder", -1, 4),
-	NewAmong("ster", -1, 3),
-	NewAmong("iteit", -1, 2),
-	NewAmong("dst", -1, 10),
-	NewAmong("tst", -1, 9),
+var a_step_3 = []*among{
+	newAmong("heid", -1, 3),
+	newAmong("fie", -1, 7),
+	newAmong("gie", -1, 8),
+	newAmong("atie", -1, 1),
+	newAmong("isme", -1, 5),
+	newAmong("ing", -1, 5),
+	newAmong("arij", -1, 6),
+	newAmong("erij", -1, 5),
+	newAmong("sel", -1, 3),
+	newAmong("rder", -1, 4),
+	newAmong("ster", -1, 3),
+	newAmong("iteit", -1, 2),
+	newAmong("dst", -1, 10),
+	newAmong("tst", -1, 9),
 }
 
 // define Step_3 as
-func (s *KpStemmer) r_Step_3() bool {
+func (s *kpStemmer) r_Step_3() bool {
 	// [among ( (])
 	s.ket = s.cursor
 	among_var := s.find_among_b(a_step_3)
@@ -529,33 +529,33 @@ func (s *KpStemmer) r_Step_3() bool {
 }
 
 var (
-	a_step_4_1 = []*Among{
-		NewAmong("end", -1, 10),
-		NewAmong("atief", -1, 2),
-		NewAmong("erig", -1, 10),
-		NewAmong("achtig", -1, 9),
-		NewAmong("ioneel", -1, 1),
-		NewAmong("baar", -1, 3),
-		NewAmong("laar", -1, 5),
-		NewAmong("naar", -1, 4),
-		NewAmong("raar", -1, 6),
-		NewAmong("eriger", -1, 10),
-		NewAmong("achtiger", -1, 9),
-		NewAmong("lijker", -1, 8),
-		NewAmong("tant", -1, 7),
-		NewAmong("erigst", -1, 10),
-		NewAmong("achtigst", -1, 9),
-		NewAmong("lijkst", -1, 8),
+	a_step_4_1 = []*among{
+		newAmong("end", -1, 10),
+		newAmong("atief", -1, 2),
+		newAmong("erig", -1, 10),
+		newAmong("achtig", -1, 9),
+		newAmong("ioneel", -1, 1),
+		newAmong("baar", -1, 3),
+		newAmong("laar", -1, 5),
+		newAmong("naar", -1, 4),
+		newAmong("raar", -1, 6),
+		newAmong("eriger", -1, 10),
+		newAmong("achtiger", -1, 9),
+		newAmong("lijker", -1, 8),
+		newAmong("tant", -1, 7),
+		newAmong("erigst", -1, 10),
+		newAmong("achtigst", -1, 9),
+		newAmong("lijkst", -1, 8),
 	}
-	a_step_4_2 = []*Among{
-		NewAmong("ig", -1, 1),
-		NewAmong("iger", -1, 1),
-		NewAmong("igst", -1, 1),
+	a_step_4_2 = []*among{
+		newAmong("ig", -1, 1),
+		newAmong("iger", -1, 1),
+		newAmong("igst", -1, 1),
 	}
 )
 
 // define Step_4 as
-func (s *KpStemmer) r_Step_4() bool {
+func (s *kpStemmer) r_Step_4() bool {
 	r := s.limit - s.cursor
 	// (   [among ( (])
 	{
@@ -660,33 +660,33 @@ func (s *KpStemmer) r_Step_4() bool {
 	return false
 }
 
-var a_step_6 = []*Among{
-	NewAmong("bb", -1, 1),
-	NewAmong("cc", -1, 2),
-	NewAmong("dd", -1, 3),
-	NewAmong("ff", -1, 4),
-	NewAmong("gg", -1, 5),
-	NewAmong("hh", -1, 6),
-	NewAmong("jj", -1, 7),
-	NewAmong("kk", -1, 8),
-	NewAmong("ll", -1, 9),
-	NewAmong("mm", -1, 10),
-	NewAmong("nn", -1, 11),
-	NewAmong("pp", -1, 12),
-	NewAmong("qq", -1, 13),
-	NewAmong("rr", -1, 14),
-	NewAmong("ss", -1, 15),
-	NewAmong("tt", -1, 16),
-	NewAmong("v", -1, 21),
-	NewAmong("vv", 16, 17),
-	NewAmong("ww", -1, 18),
-	NewAmong("xx", -1, 19),
-	NewAmong("z", -1, 22),
-	NewAmong("zz", 20, 20),
+var a_step_6 = []*among{
+	newAmong("bb", -1, 1),
+	newAmong("cc", -1, 2),
+	newAmong("dd", -1, 3),
+	newAmong("ff", -1, 4),
+	newAmong("gg", -1, 5),
+	newAmong("hh", -1, 6),
+	newAmong("jj", -1, 7),
+	newAmong("kk", -1, 8),
+	newAmong("ll", -1, 9),
+	newAmong("mm", -1, 10),
+	newAmong("nn", -1, 11),
+	newAmong("pp", -1, 12),
+	newAmong("qq", -1, 13),
+	newAmong("rr", -1, 14),
+	newAmong("ss", -1, 15),
+	newAmong("tt", -1, 16),
+	newAmong("v", -1, 21),
+	newAmong("vv", 16, 17),
+	newAmong("ww", -1, 18),
+	newAmong("xx", -1, 19),
+	newAmong("z", -1, 22),
+	newAmong("zz", 20, 20),
 }
 
 // define Step_6 as
-func (s *KpStemmer) r_Step_6() {
+func (s *kpStemmer) r_Step_6() {
 	// [among ( (])
 	s.ket = s.cursor
 	among_var := s.find_among_b(a_step_6)
@@ -764,14 +764,14 @@ func (s *KpStemmer) r_Step_6() {
 	// )
 }
 
-var a_step_7 = []*Among{
-	NewAmong("ft", -1, 2),
-	NewAmong("kt", -1, 1),
-	NewAmong("pt", -1, 3),
+var a_step_7 = []*among{
+	newAmong("ft", -1, 2),
+	newAmong("kt", -1, 1),
+	newAmong("pt", -1, 3),
 }
 
 // define Step_7 as
-func (s *KpStemmer) r_Step_7() bool {
+func (s *kpStemmer) r_Step_7() bool {
 	// [among ( (])
 	s.ket = s.cursor
 	among_var := s.find_among_b(a_step_7)
@@ -795,7 +795,7 @@ func (s *KpStemmer) r_Step_7() bool {
 }
 
 // define V  as test (v or 'ij')
-func (s *KpStemmer) r_V() bool {
+func (s *kpStemmer) r_V() bool {
 	r := s.limit - s.cursor
 	if s.in_grouping_b(g_v, rune_a, rune_y) || s.eq_s_b("ij") {
 		s.cursor = s.limit - r
@@ -805,7 +805,7 @@ func (s *KpStemmer) r_V() bool {
 }
 
 // define VX as test (next v or 'ij')
-func (s *KpStemmer) r_VX() bool {
+func (s *kpStemmer) r_VX() bool {
 	r := s.limit - s.cursor
 	if s.cursor > s.limit_backward {
 		s.cursor--
@@ -818,7 +818,7 @@ func (s *KpStemmer) r_VX() bool {
 }
 
 // define lengthen_V as do (
-func (s *KpStemmer) r_lengthen_V() {
+func (s *kpStemmer) r_lengthen_V() {
 	r_1 := s.limit - s.cursor
 	// non-v_WX [
 	if s.out_grouping_b(g_v_WX, rune_a, rune_y) {
@@ -862,7 +862,7 @@ func (s *KpStemmer) r_lengthen_V() {
 }
 
 // define measure as
-func (s *KpStemmer) r_measure() {
+func (s *kpStemmer) r_measure() {
 	c := s.cursor
 	// do (
 	{
@@ -904,7 +904,7 @@ func (s *KpStemmer) r_measure() {
 	s.cursor = c
 }
 
-func (s *KpStemmer) Stem() {
+func (s *kpStemmer) Stem() {
 	b_Y_found := false // unset Y_found
 	b_stemmed := false // unset stemmed
 	// do ( ['y'] <-'Y' set Y_found )
@@ -1064,7 +1064,7 @@ func (s *KpStemmer) Stem() {
 }
 
 func Stem(value string) string {
-	s := KpStemmer{}
+	s := kpStemmer{}
 	s.SetCurrent(value)
 	s.Stem()
 	return s.GetCurrent()
